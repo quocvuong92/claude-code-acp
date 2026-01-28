@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.2
+
+- Fix: Enforce minimum 60-second timeout for Bash commands to prevent premature termination with certain model providers (e.g., Kiro/AWS CodeWhisperer)
+
 ## 0.13.1
 
 - Update to @anthropic-ai/claude-agent-sdk@0.2.7

@@ -439,6 +439,13 @@ Output: Create directory 'foo'`),
             throw new Error("unreachable");
           }
 
+          // Workaround: Some model providers (like Kiro) pass unreasonably small timeouts
+          // Enforce a minimum timeout of 60 seconds to prevent premature command termination
+          const MIN_TIMEOUT_MS = 60 * 1000; // 60 seconds
+          const effectiveTimeout = input.timeout
+            ? Math.max(input.timeout, MIN_TIMEOUT_MS)
+            : 2 * 60 * 1000; // Default 2 minutes
+
           const handle = await agent.client.createTerminal({
             command: input.command,
             env: [{ name: "CLAUDECODE", value: "1" }],
@@ -470,7 +477,7 @@ Output: Create directory 'foo'`),
           const statusPromise = Promise.race([
             handle.waitForExit().then((exitStatus) => ({ status: "exited" as const, exitStatus })),
             abortPromise.then(() => ({ status: "aborted" as const, exitStatus: null })),
-            sleep(input.timeout ?? 2 * 60 * 1000).then(async () => {
+            sleep(effectiveTimeout).then(async () => {
               if (agent.backgroundTerminals[handle.id]?.status === "started") {
                 await handle.kill();
               }
