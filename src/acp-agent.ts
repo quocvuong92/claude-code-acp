@@ -792,6 +792,16 @@ export class ClaudeAcpAgent implements Agent {
 
   canUseTool(sessionId: string): CanUseTool {
     return async (toolName, toolInput, { signal, suggestions, toolUseID }) => {
+      // Workaround: Some model providers (like Kiro) pass unreasonably small timeouts
+      // Enforce a minimum timeout of 60 seconds to prevent premature command termination
+      if (toolName === "Bash" && toolInput && typeof toolInput === "object") {
+        const MIN_TIMEOUT_MS = 60_000;
+        const bashInput = toolInput as Record<string, unknown>;
+        if (typeof bashInput.timeout === "number" && bashInput.timeout < MIN_TIMEOUT_MS) {
+          bashInput.timeout = MIN_TIMEOUT_MS;
+        }
+      }
+
       const supportsTerminalOutput = this.clientCapabilities?._meta?.["terminal_output"] === true;
       const session = this.sessions[sessionId];
       if (!session) {
